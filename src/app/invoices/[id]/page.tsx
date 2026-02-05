@@ -88,15 +88,17 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
             <Sidebar />
             <Header title="Invoice Details" subtitle={id} />
 
-            <main className="md:ml-64 pt-24 px-8 pb-12">
+            <main className="md:ml-64 pt-32 px-8 pb-12">
                 <div className="max-w-4xl mx-auto space-y-8">
 
                     <div className="flex items-center justify-between mb-2">
-                        <Link href="/invoices" className="flex items-center text-slate-500 hover:text-sage-dark transition-colors gap-2 group">
-                            <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back to Invoices
+                        <Link href="/invoices" className="flex items-center text-slate-500 hover:text-sage-dark transition-all gap-2 group hover:-translate-x-1">
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-400 group-hover:text-sage-dark">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                            </div>
+                            <span className="font-medium">Back to Invoices</span>
                         </Link>
                         <div className="flex gap-3">
                             <button
@@ -157,7 +159,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                                         alert('Failed to generate PDF. Please try again.');
                                     }
                                 }}
-                                className="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors font-medium">
+                                className="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-all font-medium shadow-sm hover:shadow-md">
                                 Download PDF
                             </button>
                             <button
@@ -172,61 +174,64 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                                         btn.disabled = false;
                                     }, 1000);
                                 }}
-                                className="px-4 py-2 bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors font-medium shadow-lg shadow-sage/20 disabled:opacity-70 disabled:cursor-not-allowed">
+                                className="px-5 py-2.5 bg-sage text-white rounded-xl hover:bg-sage-dark transition-all font-medium shadow-lg shadow-sage/20 hover:shadow-sage/30 hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed">
                                 Send Reminder
                             </button>
                         </div>
                     </div>
 
-                    <div className="bg-white border border-sage/10 rounded-2xl p-8 shadow-sm">
+                    <div className="bg-white/70 backdrop-blur-xl border border-white/60 rounded-[2rem] p-10 shadow-xl relative overflow-hidden ring-1 ring-slate-900/5">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-sage/5 rounded-full -translate-y-48 translate-x-32 blur-3xl pointer-events-none"></div>
+
                         {/* Header */}
-                        <div className="flex justify-between items-start border-b border-sage/10 pb-8 mb-8">
+                        <div className="flex justify-between items-start border-b border-slate-200/50 pb-8 mb-8 relative z-10">
                             <div>
-                                <h1 className="text-3xl font-bold text-slate-900 mb-2">Invoice {invoice.id}</h1>
-                                <span className={`px-3 py-1 rounded-full text-sm font-semibold
-                        ${invoice.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
-                                        invoice.status === 'Pending' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                                            'bg-rose-100 text-rose-700 border border-rose-200'}`}>
+                                <h1 className="text-4xl font-bold text-slate-800 mb-3 tracking-tight">Invoice <span className="text-slate-400 font-light text-2xl ml-2">{invoice.id}</span></h1>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border
+                          ${invoice.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                        invoice.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                            'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${invoice.status === 'Paid' ? 'bg-emerald-500' : invoice.status === 'Pending' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
                                     {invoice.status}
                                 </span>
                             </div>
                             <div className="text-right">
-                                <p className="text-slate-500 font-medium">Amount Due</p>
-                                <p className="text-3xl font-bold text-sage-dark">{invoice.amount}</p>
+                                <p className="text-slate-500 font-medium text-sm uppercase tracking-wider mb-1">Amount Due</p>
+                                <p className="text-4xl font-bold text-slate-800 tracking-tight">{invoice.amount}</p>
                             </div>
                         </div>
 
                         {/* Client Info */}
-                        <div className="grid grid-cols-2 gap-8 mb-8">
+                        <div className="grid grid-cols-2 gap-12 mb-10 relative z-10">
                             <div>
-                                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Bill To</h3>
-                                <p className="text-lg font-medium text-slate-900">{invoice.client}</p>
-                                <p className="text-slate-500">{invoice.email}</p>
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Bill To</h3>
+                                <p className="text-xl font-semibold text-slate-900 mb-1">{invoice.client}</p>
+                                <p className="text-slate-500 font-medium">{invoice.email}</p>
                             </div>
                             <div className="text-right">
-                                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">Invoice Date</h3>
-                                <p className="text-lg font-medium text-slate-900">{invoice.date}</p>
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Invoice Date</h3>
+                                <p className="text-xl font-semibold text-slate-900">{invoice.date}</p>
                             </div>
                         </div>
 
                         {/* Items */}
-                        <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden mb-8">
+                        <div className="bg-white/50 rounded-2xl border border-white/50 overflow-hidden mb-8 relative z-10 shadow-sm">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-100 border-b border-slate-200 text-xs uppercase text-slate-500">
+                                <thead className="bg-slate-50/80 border-b border-slate-200/50 text-xs uppercase text-slate-500 tracking-wider">
                                     <tr>
-                                        <th className="px-6 py-4 font-medium">Description</th>
-                                        <th className="px-6 py-4 font-medium text-center">Qty</th>
-                                        <th className="px-6 py-4 font-medium text-right">Price</th>
-                                        <th className="px-6 py-4 font-medium text-right">Total</th>
+                                        <th className="px-8 py-4 font-semibold">Description</th>
+                                        <th className="px-8 py-4 font-semibold text-center">Qty</th>
+                                        <th className="px-8 py-4 font-semibold text-right">Price</th>
+                                        <th className="px-8 py-4 font-semibold text-right">Total</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-200">
+                                <tbody className="divide-y divide-slate-100">
                                     {invoice.items.map((item, i) => (
                                         <tr key={i}>
-                                            <td className="px-6 py-4 text-slate-700">{item.desc}</td>
-                                            <td className="px-6 py-4 text-center text-slate-600">{item.qty}</td>
-                                            <td className="px-6 py-4 text-right text-slate-600">${item.price.toFixed(2)}</td>
-                                            <td className="px-6 py-4 text-right font-semibold text-slate-900">${(item.price * item.qty).toFixed(2)}</td>
+                                            <td className="px-8 py-5 text-slate-700 font-medium">{item.desc}</td>
+                                            <td className="px-8 py-5 text-center text-slate-600">{item.qty}</td>
+                                            <td className="px-8 py-5 text-right text-slate-600 font-mono">${item.price.toFixed(2)}</td>
+                                            <td className="px-8 py-5 text-right font-bold text-slate-900 font-mono">${(item.price * item.qty).toFixed(2)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -234,7 +239,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                         </div>
 
                         {/* Note */}
-                        <div className="text-sm text-slate-500 italic">
+                        <div className="text-sm text-slate-400 italic">
                             Note: This is a system generated invoice.
                         </div>
                     </div>
