@@ -17,9 +17,10 @@ export async function GET() {
 
         const data = await res.json();
 
-        // Inject mock Platinum price if missing (provider only gives Gold/Silver)
+        // Inject mock Platinum and Diamond prices (provider only gives Gold/Silver)
         if (data.items && data.items.length > 0) {
-            data.items[0].xptPrice = 980.20 + (Math.random() * 2); // Mock fluctuation
+            data.items[0].xptPrice = 980.20 + (Math.random() * 2); // Mock Platinum fluctuation
+            data.items[0].diaPrice = 5450.00 + (Math.random() * 50); // Mock Diamond per carat fluctuation
         }
 
         return NextResponse.json(data);
@@ -31,6 +32,7 @@ export async function GET() {
                 xauPrice: 2025.50,
                 xagPrice: 24.50,
                 xptPrice: 980.20,
+                diaPrice: 5450.00,
                 curr: 'USD'
             }]
         });

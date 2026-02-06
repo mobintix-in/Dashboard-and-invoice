@@ -6,6 +6,25 @@ import { Sidebar } from "@/components/Sidebar";
 import { useState, useEffect } from "react";
 import Link from 'next/link';
 
+type Unit = 'mg' | 'g' | 'kg' | 'oz' | 'ct';
+
+const UNIT_LABELS: Record<Unit, string> = {
+    mg: 'milligrams',
+    g: 'Grams',
+    kg: 'kilo',
+    oz: 'oz',
+    ct: 'carats (ct)'
+};
+
+// Conversion to Ounces (Troy)
+const CONVERSION_TO_OZ: Record<Unit, number> = {
+    mg: 1 / 31103.4768,
+    g: 1 / 31.1034768,
+    kg: 1000 / 31.1034768,
+    oz: 1,
+    ct: 0.2 / 31.1034768 // 1 carat = 0.2g
+};
+
 export default function CreateInvoicePage() {
     const [formData, setFormData] = useState({
         clientName: '',
@@ -13,7 +32,7 @@ export default function CreateInvoicePage() {
         date: new Date().toISOString().split('T')[0],
         status: 'Pending',
         items: [
-            { id: '1', itemType: 'Custom', quantity: 1, unitPrice: 0 }
+            { id: '1', itemType: 'Custom', quantity: 1, unit: 'oz' as Unit, purity: 24, unitPrice: 0 }
         ]
     });
 
@@ -24,7 +43,8 @@ export default function CreateInvoicePage() {
     const [livePrices, setLivePrices] = useState({
         Gold: 0,
         Silver: 0,
-        Platinum: 0
+        Platinum: 0,
+        Diamond: 0
     });
 
     // Fetch live prices
@@ -39,7 +59,8 @@ export default function CreateInvoicePage() {
                         ...prev,
                         Gold: item.xauPrice,
                         Silver: item.xagPrice,
-                        Platinum: item.xptPrice || 0
+                        Platinum: item.xptPrice || 0,
+                        Diamond: item.diaPrice || 0
                     }));
                 }
             } catch (error) {
@@ -56,7 +77,7 @@ export default function CreateInvoicePage() {
     useEffect(() => {
         let hasUpdates = false;
         const newItems = formData.items.map(item => {
-            if (['Gold', 'Silver', 'Platinum'].includes(item.itemType)) {
+            if (['Gold', 'Silver', 'Platinum', 'Diamond'].includes(item.itemType)) {
                 const newPrice = parseFloat(livePrices[item.itemType as keyof typeof livePrices].toFixed(2));
                 if (item.unitPrice !== newPrice && newPrice > 0) {
                     hasUpdates = true;
@@ -67,27 +88,30 @@ export default function CreateInvoicePage() {
         });
 
         if (hasUpdates) {
-            // Only update if actual changes to avoid loops, though strict equality check on objects might trigger rerenders, 
-            // but checking specific fields prevents infinite loops if values are same.
             setFormData(prev => ({ ...prev, items: newItems }));
         }
-    }, [livePrices, formData.items]); // Note: adding formData.items here requires careful handling to avoid infinite loops. 
-    // Actually, to avoid infinite loops, we should probably ONLY run this when livePrices change OR when an item type changes to a live type.
-    // simpler approach: The updateItem handler handles the "Type chnage -> Set Price" logic. This effect handles "Live Price Change -> Update Price" logic.
+    }, [livePrices, formData.items]);
 
-    // Let's refine the Effect to ONLY run on livePrices change, or we risking fighting the user?
-    // Actually the previous implementation watched variables. 
-    // Let's rely on livePrices changes to update existing items.
-    // And when user changes type, we pull the CURRENT live price immediately.
+    const calculateItemTotal = (item: any) => {
+        if (item.itemType === 'Diamond') {
+            // Diamond price is per Carat (ct)
+            const qtyInCt = item.quantity * (CONVERSION_TO_OZ[item.unit as Unit] / CONVERSION_TO_OZ['ct']);
+            return qtyInCt * item.unitPrice;
+        }
+        // Price for metals is assumed to be per Ounce
+        const qtyInOz = item.quantity * CONVERSION_TO_OZ[item.unit as Unit];
+        const purityFactor = (item.purity || 24) / 24;
+        return qtyInOz * item.unitPrice * purityFactor;
+    };
 
     const calculateTotal = () => {
-        return formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2);
+        return formData.items.reduce((sum, item) => sum + calculateItemTotal(item), 0).toFixed(2);
     };
 
     const addItem = () => {
         setFormData(prev => ({
             ...prev,
-            items: [...prev.items, { id: Date.now().toString(), itemType: 'Custom', quantity: 1, unitPrice: 0 }]
+            items: [...prev.items, { id: Date.now().toString(), itemType: 'Custom', quantity: 1, unit: 'oz', purity: 24, unitPrice: 0 }]
         }));
     };
 
@@ -103,7 +127,7 @@ export default function CreateInvoicePage() {
         setFormData(prev => {
             const newItems = prev.items.map(item => {
                 if (item.id === id) {
-                    const updatedItem = { ...item, [field]: value };
+                    const updatedItem = { ...item, [field]: value } as any;
                     // If type changed to a live asset, update price immediately
                     if (field === 'itemType' && ['Gold', 'Silver', 'Platinum'].includes(value as string)) {
                         updatedItem.unitPrice = parseFloat(livePrices[value as keyof typeof livePrices].toFixed(2));
@@ -272,17 +296,17 @@ export default function CreateInvoicePage() {
 
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
                                             {/* Type Selector */}
-                                            <div className="md:col-span-6 space-y-2">
+                                            <div className="md:col-span-4 space-y-2">
                                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Item Type</label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['Custom', 'Gold', 'Silver', 'Platinum'].map((type) => (
+                                                    {['Custom', 'Gold', 'Silver', 'Platinum', 'Diamond'].map((type) => (
                                                         <button
                                                             key={type}
                                                             type="button"
                                                             onClick={() => updateItem(item.id, 'itemType', type)}
                                                             className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all
                                                                 ${item.itemType === type
-                                                                    ? 'bg-sage text-white border-sage'
+                                                                    ? 'bg-sage text-white border-sage shadow-md shadow-sage/20'
                                                                     : 'bg-white text-slate-600 border-slate-200 hover:border-sage/50'}`}
                                                         >
                                                             {type}
@@ -291,28 +315,84 @@ export default function CreateInvoicePage() {
                                                 </div>
                                             </div>
 
-                                            {/* Quantity */}
+                                            {/* Karat selector for all types */}
+                                            <div className="md:col-span-2 space-y-2">
+                                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Karat</label>
+                                                <select
+                                                    value={item.purity}
+                                                    onChange={e => updateItem(item.id, 'purity', parseFloat(e.target.value))}
+                                                    className="w-full bg-white border border-slate-200 rounded-xl px-2 py-2 text-sm font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-sage/50 transition-all cursor-pointer"
+                                                >
+                                                    {item.itemType === 'Gold' ? (
+                                                        <>
+                                                            <option value={24}>24k</option>
+                                                            <option value={22}>22k</option>
+                                                            <option value={21}>21k</option>
+                                                            <option value={18}>18k</option>
+                                                            <option value={14}>14k</option>
+                                                        </>
+                                                    ) : item.itemType === 'Silver' ? (
+                                                        <>
+                                                            <option value={24}>Fine (999)</option>
+                                                            <option value={22.2}>Sterling (925)</option>
+                                                        </>
+                                                    ) : item.itemType === 'Platinum' ? (
+                                                        <>
+                                                            <option value={24}>Pure (999)</option>
+                                                            <option value={22.8}>950 Plat</option>
+                                                            <option value={21.6}>900 Plat</option>
+                                                        </>
+                                                    ) : item.itemType === 'Diamond' ? (
+                                                        <>
+                                                            <option value={24}>Setting: 24k</option>
+                                                            <option value={18}>Setting: 18k</option>
+                                                            <option value={14}>Setting: 14k</option>
+                                                            <option value={0}>Loose (No Metal)</option>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <option value={24}>Pure/24k</option>
+                                                            <option value={22}>22k</option>
+                                                            <option value={18}>18k</option>
+                                                            <option value={14}>14k</option>
+                                                        </>
+                                                    )}
+                                                </select>
+                                            </div>
+
+                                            {/* Quantity and Unit */}
                                             <div className="md:col-span-3 space-y-2">
-                                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Quantity (oz)</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 transition-all
-                                                        ${errors[`${item.id}_quantity`]
-                                                            ? 'border-rose-300 ring-rose-100 focus:border-rose-500'
-                                                            : 'border-slate-200 focus:ring-sage/50 focus:border-sage/50'}`}
-                                                    value={item.quantity}
-                                                    onChange={e => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
-                                                />
+                                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Quantity</label>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        className={`w-full bg-white border rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 transition-all
+                                                            ${errors[`${item.id}_quantity`]
+                                                                ? 'border-rose-300 ring-rose-100 focus:border-rose-500'
+                                                                : 'border-slate-200 focus:ring-sage/50 focus:border-sage/50'}`}
+                                                        value={item.quantity}
+                                                        onChange={e => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                                                    />
+                                                    <select
+                                                        value={item.unit}
+                                                        onChange={e => updateItem(item.id, 'unit', e.target.value)}
+                                                        className="bg-white border border-slate-200 rounded-xl px-2 py-2 text-xs font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-sage/50 transition-all cursor-pointer"
+                                                    >
+                                                        {Object.entries(UNIT_LABELS).map(([value, label]) => (
+                                                            <option key={value} value={value}>{label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                                 <InputError message={errors[`${item.id}_quantity`]} />
                                             </div>
 
                                             {/* Unit Price */}
                                             <div className="md:col-span-3 space-y-2">
                                                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex justify-between">
-                                                    Price ($)
-                                                    {['Gold', 'Silver', 'Platinum'].includes(item.itemType) && (
+                                                    {item.itemType === 'Diamond' ? 'Price ($/ct)' : 'Price ($/oz)'}
+                                                    {['Gold', 'Silver', 'Platinum', 'Diamond'].includes(item.itemType) && (
                                                         <span className="text-[10px] text-sage font-normal">Live</span>
                                                     )}
                                                 </label>
@@ -320,9 +400,9 @@ export default function CreateInvoicePage() {
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
-                                                    readOnly={['Gold', 'Silver', 'Platinum'].includes(item.itemType)}
+                                                    readOnly={['Gold', 'Silver', 'Platinum', 'Diamond'].includes(item.itemType)}
                                                     className={`w-full border rounded-xl px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 transition-all
-                                                        ${['Gold', 'Silver', 'Platinum'].includes(item.itemType)
+                                                        ${['Gold', 'Silver', 'Platinum', 'Diamond'].includes(item.itemType)
                                                             ? 'bg-sage/5 border-sage/20 cursor-default font-semibold text-sage-dark'
                                                             : errors[`${item.id}_unitPrice`]
                                                                 ? 'bg-white border-rose-300 ring-rose-100 focus:border-rose-500'
@@ -341,7 +421,7 @@ export default function CreateInvoicePage() {
                             <div className="p-6 bg-cream/50 rounded-xl border border-sage/10 flex items-center justify-between">
                                 <div>
                                     <h3 className="text-sm font-medium text-slate-500">Total Amount</h3>
-                                    <p className="text-xs text-slate-400">Sum of all items</p>
+                                    <p className="text-xs text-slate-400">Sum of all items (converted to oz and adjusted for purity)</p>
                                 </div>
                                 <div className="text-3xl font-bold text-sage-dark">
                                     ${calculateTotal()}
@@ -367,7 +447,6 @@ export default function CreateInvoicePage() {
                                             const total = calculateTotal();
 
                                             // -- Header --
-                                            // Brand / Logo
                                             doc.setFontSize(26);
                                             doc.setTextColor(137, 152, 109); // Sage
                                             doc.setFont('helvetica', 'bold');
@@ -378,7 +457,6 @@ export default function CreateInvoicePage() {
                                             doc.setFont('helvetica', 'normal');
                                             doc.text('Premium Assets & Services', 14, 28);
 
-                                            // Shop Details (Right Aligned)
                                             doc.setFontSize(10);
                                             doc.setTextColor(60);
                                             doc.text('Rrumi Gold & Silver', 196, 20, { align: 'right' });
@@ -387,16 +465,12 @@ export default function CreateInvoicePage() {
                                             doc.text('support@Rrumi.com', 196, 35, { align: 'right' });
                                             doc.text('+1 (555) 123-4567', 196, 40, { align: 'right' });
 
-                                            // -- Divider --
                                             doc.setDrawColor(230);
                                             doc.line(14, 45, 196, 45);
 
-                                            // -- Info Section --
                                             const infoTop = 55;
-
-                                            // Left: Invoice Info
                                             doc.setFontSize(10);
-                                            doc.setTextColor(137, 152, 109); // Sage color for labels
+                                            doc.setTextColor(137, 152, 109);
                                             doc.setFont('helvetica', 'bold');
                                             doc.text('INVOICE DETAILS', 14, infoTop);
 
@@ -409,7 +483,6 @@ export default function CreateInvoicePage() {
                                             doc.text(`${formData.date}`, 40, infoTop + 8);
                                             doc.text(`Pending`, 40, infoTop + 14);
 
-                                            // Right: Bill To
                                             doc.setTextColor(137, 152, 109);
                                             doc.setFont('helvetica', 'bold');
                                             doc.text('BILL TO', 120, infoTop);
@@ -422,18 +495,27 @@ export default function CreateInvoicePage() {
                                             doc.setTextColor(80);
                                             doc.text(formData.email || 'email@example.com', 120, infoTop + 14);
 
-                                            // -- Table --
                                             autoTable(doc, {
                                                 startY: 85,
-                                                head: [['Description', 'Qty', 'Unit Price', 'Total']],
-                                                body: formData.items.map(item => [
-                                                    item.itemType,
-                                                    item.quantity,
-                                                    `$${item.unitPrice.toFixed(2)}`,
-                                                    `$${(item.quantity * item.unitPrice).toFixed(2)}`
-                                                ]),
+                                                head: [['Description', 'Qty', 'Unit', 'Purity', 'Price (oz/ct)', 'Total']],
+                                                body: formData.items.map(item => {
+                                                    let purityLabel = `${item.purity}k`;
+                                                    if (item.itemType === 'Silver') purityLabel = item.purity === 24 ? '999' : '925';
+                                                    if (item.itemType === 'Platinum') purityLabel = item.purity === 24 ? '999' : item.purity === 22.8 ? '950' : '900';
+                                                    if (item.itemType === 'Diamond') purityLabel = item.purity === 0 ? 'Loose' : `${item.purity}k Set`;
+                                                    if (item.itemType === 'Custom') purityLabel = `${item.purity}k`;
+
+                                                    return [
+                                                        item.itemType,
+                                                        item.quantity,
+                                                        UNIT_LABELS[item.unit as Unit],
+                                                        purityLabel,
+                                                        `$${item.unitPrice.toFixed(2)}`,
+                                                        `$${calculateItemTotal(item).toFixed(2)}`
+                                                    ];
+                                                }),
                                                 headStyles: {
-                                                    fillColor: [137, 152, 109], // Sage
+                                                    fillColor: [137, 152, 109],
                                                     textColor: 255,
                                                     fontStyle: 'bold',
                                                     halign: 'left'
@@ -448,17 +530,15 @@ export default function CreateInvoicePage() {
                                                 theme: 'grid',
                                                 columnStyles: {
                                                     0: { cellWidth: 'auto' },
-                                                    1: { cellWidth: 20, halign: 'center' },
-                                                    2: { cellWidth: 30, halign: 'right' },
-                                                    3: { cellWidth: 30, halign: 'right', fontStyle: 'bold' }
+                                                    1: { cellWidth: 15, halign: 'center' },
+                                                    2: { cellWidth: 20, halign: 'center' },
+                                                    3: { cellWidth: 20, halign: 'center' },
+                                                    4: { cellWidth: 25, halign: 'right' },
+                                                    5: { cellWidth: 30, halign: 'right', fontStyle: 'bold' }
                                                 }
                                             });
 
-                                            // -- Total --
-                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             const finalY = (doc as any).lastAutoTable.finalY + 15;
-
-                                            // Line
                                             doc.setDrawColor(137, 152, 109);
                                             doc.setLineWidth(0.5);
                                             doc.line(120, finalY - 5, 196, finalY - 5);
@@ -468,11 +548,10 @@ export default function CreateInvoicePage() {
                                             doc.text('Total Amount:', 120, finalY + 5);
 
                                             doc.setFontSize(18);
-                                            doc.setTextColor(137, 152, 109); // Sage
+                                            doc.setTextColor(137, 152, 109);
                                             doc.setFont('helvetica', 'bold');
                                             doc.text(`$${total}`, 196, finalY + 5, { align: 'right' });
 
-                                            // Footer
                                             doc.setFontSize(8);
                                             doc.setTextColor(150);
                                             doc.text('Thank you for your business!', 105, 280, { align: 'center' });

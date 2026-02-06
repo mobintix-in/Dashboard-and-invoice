@@ -9,6 +9,7 @@ export default function PricesPage() {
     const [goldPrice, setGoldPrice] = useState(0);
     const [silverPrice, setSilverPrice] = useState(0);
     const [platinumPrice, setPlatinumPrice] = useState(0);
+    const [diamondPrice, setDiamondPrice] = useState(0);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
     // Simulate live price updates
@@ -23,6 +24,7 @@ export default function PricesPage() {
                     setGoldPrice(item.xauPrice);
                     setSilverPrice(item.xagPrice);
                     setPlatinumPrice(item.xptPrice || 0);
+                    setDiamondPrice(item.diaPrice || 0);
                     setLastUpdated(new Date());
                 }
             } catch (error) {
@@ -152,6 +154,38 @@ export default function PricesPage() {
                                     <div className="text-right">
                                         <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Ask Price</span>
                                         <span className="text-lg font-mono font-medium text-slate-600">${(platinumPrice + 2.00).toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Diamond Card */}
+                        <div className="p-8 rounded-[2rem] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-xl border border-white/60 shadow-xl relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
+                            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500 transform scale-150 rotate-12 origin-top-right">
+                                <svg className="w-48 h-48 text-cyan-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 9h15L12 2zm0 13l7.5-6h-15L12 15zm0 7l-7.5-7h15L12 22z" /></svg>
+                            </div>
+
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="p-3 bg-cyan-50/50 rounded-2xl inline-block" style={{ backgroundColor: '#ecfeff' }}>
+                                        <svg className="w-8 h-8 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                    </div>
+                                    <span className="px-3 py-1 bg-emerald-100/50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200/50">+0.82%</span>
+                                </div>
+
+                                <h2 className="text-slate-500 font-medium text-sm tracking-wider uppercase mb-1">Diamond (XDX)</h2>
+                                <div className="text-5xl font-bold text-slate-800 tracking-tight mb-8">
+                                    ${diamondPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-200/50">
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Bid Price</span>
+                                        <span className="text-lg font-mono font-medium text-slate-600">${(diamondPrice - 15.00).toFixed(2)}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Ask Price</span>
+                                        <span className="text-lg font-mono font-medium text-slate-600">${(diamondPrice + 15.00).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>

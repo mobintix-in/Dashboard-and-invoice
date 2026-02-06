@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
 
     const menuItems = [
         { name: 'Live Prices', href: '/prices', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -50,17 +51,29 @@ export function Sidebar() {
                 })}
             </nav>
 
-            {/* User Profile */}
-            <div className="p-4 m-4 bg-white/50 rounded-2xl border border-sage/5 hover:border-sage/20 transition-all cursor-pointer group">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm ring-2 ring-white shadow-sm group-hover:bg-sage transition-colors">
-                        AD
-                    </div>
-                    <div className="overflow-hidden">
-                        <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-sage-dark transition-colors">Admin User</p>
-                        <p className="text-xs text-slate-500 truncate">admin@Rrumi.com</p>
+            {/* User Profile & Logout */}
+            <div className="mt-auto border-t border-sage/10 bg-cream/30 p-4">
+                <div className="p-4 bg-white/50 rounded-2xl border border-sage/5 hover:border-sage/20 transition-all cursor-pointer group mb-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm ring-2 ring-white shadow-sm group-hover:bg-sage transition-colors">
+                            AD
+                        </div>
+                        <div className="overflow-hidden flex-1">
+                            <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-sage-dark transition-colors">Admin User</p>
+                            <p className="text-xs text-slate-500 truncate">admin@Rrumi.com</p>
+                        </div>
                     </div>
                 </div>
+
+                <button
+                    onClick={() => router.push('/login')}
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium text-rose-500 hover:bg-rose-50 rounded-xl transition-all duration-200 group"
+                >
+                    <svg className="w-5 h-5 mr-3 text-rose-400 group-hover:text-rose-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Sign Out
+                </button>
             </div>
         </aside>
     );
