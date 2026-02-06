@@ -4,7 +4,7 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
-// import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from 'next/navigation';
 
 interface InvoiceItem {
