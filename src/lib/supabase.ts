@@ -10,10 +10,10 @@ console.log('SUPABASE_CONFIG_CHECK:', {
     keyPrefix: supabaseAnonKey?.substring(0, 10)
 });
 
-// if (!supabaseUrl || !supabaseAnonKey) {
-//     console.error('❌ MISSING SUPABASE CREDENTIALS! Please restart your terminal/server and verify .env.local');
-// } else if (supabaseAnonKey.startsWith('sb_')) {
-//     console.error('❌ VALIDATION ERROR: Your NEXT_PUBLIC_SUPABASE_ANON_KEY appears to be a STRIPE key (starts with "sb_"). Please use your Supabase ANON key (starts with "eyJ").');
-// }
+if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('❌ MISSING SUPABASE CREDENTIALS! Please restart your terminal/server and verify .env.local');
+} else if (supabaseAnonKey.startsWith('sb_')) {
+    console.error('❌ VALIDATION ERROR: Your NEXT_PUBLIC_SUPABASE_ANON_KEY appears to be a STRIPE key (starts with "sb_"). Please use your Supabase ANON key (starts with "eyJ").');
+}
 
-export const supabase = createBrowserClient(supabaseUrl || '', supabaseAnonKey || '')
+export const supabase = createBrowserClient(supabaseUrl || 'https://cjslgmkiorwznexeoyub.supabase.co', supabaseAnonKey || 'sb_publishable__wMftu57WQB71fmK0fjqqg_9lERCYTw')
