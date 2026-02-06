@@ -22,7 +22,7 @@ export function Sidebar() {
                         </svg>
                     </div>
                     <h1 className="text-xl font-bold tracking-tight text-slate-800">
-                        ZENITH
+                        Rrumi
                     </h1>
                 </div>
             </div>
