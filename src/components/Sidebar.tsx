@@ -58,7 +58,7 @@ export function Sidebar() {
                     </div>
                     <div className="overflow-hidden">
                         <p className="text-sm font-semibold text-slate-800 truncate group-hover:text-sage-dark transition-colors">Admin User</p>
-                        <p className="text-xs text-slate-500 truncate">admin@zenith.com</p>
+                        <p className="text-xs text-slate-500 truncate">admin@Rrumi.com</p>
                     </div>
                 </div>
             </div>
