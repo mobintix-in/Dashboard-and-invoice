@@ -5,11 +5,25 @@ interface HeaderProps {
     subtitle?: string;
 }
 
-export function Header({ title = 'Dashboard', subtitle = 'Overview' }: HeaderProps) {
+interface HeaderProps {
+    title?: string;
+    subtitle?: string;
+    onMenuClick?: () => void;
+}
+
+export function Header({ title = 'Dashboard', subtitle = 'Overview', onMenuClick }: HeaderProps) {
     return (
         <header className="h-20 bg-cream/50 backdrop-blur-md fixed top-0 right-0 left-0 md:left-64 z-10 flex items-center justify-between px-8">
             <div className="flex flex-col">
                 <div className="flex items-center gap-2 text-sm text-slate-500 font-medium mb-1">
+                    <button
+                        onClick={onMenuClick}
+                        className="mr-2 p-1.5 -ml-1.5 rounded-lg text-slate-400 hover:text-sage-dark md:hidden transition-colors"
+                    >
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
                     <span>{title}</span>
                     <span className="text-sage-dark/30">/</span>
                     <span className="text-sage-dark">{subtitle}</span>
