@@ -4,6 +4,8 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 type Unit = 'mg' | 'g' | 'kg' | 'oz' | 'ct';
@@ -26,6 +28,8 @@ const CONVERSION_TO_OZ: Record<Unit, number> = {
 };
 
 export default function CreateInvoicePage() {
+    const router = useRouter();
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         clientName: '',
         email: '',
@@ -92,7 +96,7 @@ export default function CreateInvoicePage() {
         }
     }, [livePrices, formData.items]);
 
-    const calculateItemTotal = (item: any) => {
+    const calculateItemTotal = (item: { itemType: string; quantity: number; unit: Unit; purity: number; unitPrice: number }) => {
         if (item.itemType === 'Diamond') {
             // Diamond price is per Carat (ct)
             const qtyInCt = item.quantity * (CONVERSION_TO_OZ[item.unit as Unit] / CONVERSION_TO_OZ['ct']);
@@ -127,7 +131,7 @@ export default function CreateInvoicePage() {
         setFormData(prev => {
             const newItems = prev.items.map(item => {
                 if (item.id === id) {
-                    const updatedItem = { ...item, [field]: value } as any;
+                    const updatedItem = { ...item, [field]: value };
                     // If type changed to a live asset, update price immediately
                     if (field === 'itemType' && ['Gold', 'Silver', 'Platinum'].includes(value as string)) {
                         updatedItem.unitPrice = parseFloat(livePrices[value as keyof typeof livePrices].toFixed(2));
@@ -177,10 +181,53 @@ export default function CreateInvoicePage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            alert("Invoice created successfully (Simulated)");
+            setIsSaving(true);
+            try {
+                // 1. Insert the main invoice record
+                const { data: invoiceData, error: invoiceError } = await supabase
+                    .from('invoices')
+                    .insert({
+                        client_name: formData.clientName,
+                        email: formData.email,
+                        date: formData.date,
+                        status: formData.status,
+                        total_amount: parseFloat(calculateTotal())
+                    })
+                    .select()
+                    .single();
+
+                if (invoiceError) throw invoiceError;
+
+                // 2. Insert all items linked to this invoice
+                if (invoiceData) {
+                    const itemsToInsert = formData.items.map(item => ({
+                        invoice_id: invoiceData.id,
+                        item_type: item.itemType,
+                        quantity: item.quantity,
+                        unit: item.unit,
+                        purity: item.purity,
+                        unit_price: item.unitPrice,
+                        total: calculateItemTotal(item)
+                    }));
+
+                    const { error: itemsError } = await supabase
+                        .from('invoice_items')
+                        .insert(itemsToInsert);
+
+                    if (itemsError) throw itemsError;
+
+                    // Success: Redirect back to invoices list
+                    router.push('/invoices');
+                }
+            } catch (error: unknown) {
+                console.error('Error saving invoice:', error);
+                alert(`Failed to save invoice: ${(error as Error).message || 'Unknown error'}`);
+            } finally {
+                setIsSaving(false);
+            }
         }
     };
 
@@ -538,6 +585,7 @@ export default function CreateInvoicePage() {
                                                 }
                                             });
 
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             const finalY = (doc as any).lastAutoTable.finalY + 15;
                                             doc.setDrawColor(137, 152, 109);
                                             doc.setLineWidth(0.5);
@@ -569,9 +617,18 @@ export default function CreateInvoicePage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="w-full bg-sage hover:bg-sage-dark text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-sage/20 focus:ring-2 focus:ring-sage focus:ring-offset-2 focus:ring-offset-white"
+                                    disabled={isSaving}
+                                    className="w-full bg-sage hover:bg-sage-dark text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-sage/20 focus:ring-2 focus:ring-sage focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
-                                    Create Invoice
+                                    {isSaving ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Saving...
+                                        </>
+                                    ) : 'Create Invoice'}
                                 </button>
                             </div>
 

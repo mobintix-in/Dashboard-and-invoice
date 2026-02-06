@@ -1,92 +1,126 @@
-
 'use client';
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import Link from 'next/link';
-import { use } from 'react';
+import { use, useEffect, useState } from 'react';
+// import { supabase } from "@/lib/supabase";
+import { useRouter } from 'next/navigation';
 
-// Mock data lookup - in a real app this would be an API call
-const getInvoice = (id: string) => {
-    const invoices = [
-        {
-            id: 'INV-001',
-            client: 'Acme Corp',
-            email: 'billing@acme.com',
-            date: 'Oct 24, 2023',
-            amount: '$1,200.00',
-            status: 'Paid',
-            items: [
-                { desc: 'Web Development Services', qty: 1, price: 1200.00 }
-            ]
-        },
-        {
-            id: 'INV-002',
-            client: 'Global Tech',
-            email: 'accounts@globaltech.io',
-            date: 'Oct 22, 2023',
-            amount: '$3,450.50',
-            status: 'Pending',
-            items: [
-                { desc: 'Server Migration', qty: 1, price: 2500.00 },
-                { desc: 'Cloud Storage (Yearly)', qty: 1, price: 950.50 }
-            ]
-        },
-        {
-            id: 'INV-003',
-            client: 'Global Tech',
-            email: 'accounts@globaltech.io',
-            date: 'Oct 22, 2023',
-            amount: '$3,450.50',
-            status: 'Pending',
-            items: [
-                { desc: 'Server Migration', qty: 1, price: 2500.00 },
-                { desc: 'Cloud Storage (Yearly)', qty: 1, price: 950.50 }
-            ]
-        },
-        {
-            id: 'INV-004',
-            client: 'Acme Corp',
-            email: 'billing@acme.com',
-            date: 'Oct 24, 2023',
-            amount: '$1,200.00',
-            status: 'Paid',
-            items: [
-                { desc: 'Web Development Services', qty: 1, price: 1200.00 }
-            ]
-        },
-        {
-            id: 'INV-005',
-            client: 'Global Tech',
-            email: 'accounts@globaltech.io',
-            date: 'Oct 22, 2023',
-            amount: '$3,450.50',
-            status: 'Pending',
-            items: [
-                { desc: 'Server Migration', qty: 1, price: 2500.00 },
-                { desc: 'Cloud Storage (Yearly)', qty: 1, price: 950.50 }
-            ]
-        },
-    ];
-    return invoices.find(inv => inv.id === id) || {
-        id,
-        client: 'Unknown Client',
-        email: 'unknown@example.com',
-        date: 'Unknown Date',
-        amount: '$0.00',
-        status: 'Unknown',
-        items: []
-    };
-};
+interface InvoiceItem {
+    id: string;
+    item_type: string;
+    quantity: number;
+    unit: string;
+    purity: number;
+    unit_price: number;
+    total: number;
+}
+
+interface Invoice {
+    id: string;
+    client_name: string;
+    email: string;
+    date: string;
+    status: string;
+    total_amount: number;
+    created_at: string;
+    invoice_items: InvoiceItem[];
+}
 
 export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const invoice = getInvoice(id);
+    const router = useRouter();
+    const [invoice, setInvoice] = useState<Invoice | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchInvoice = async () => {
+            try {
+                // Fetch Invoice and Items
+                const { data, error } = await supabase
+                    .from('invoices')
+                    .select(`
+                        *,
+                        invoice_items (*)
+                    `)
+                    .eq('id', id)
+                    .single();
+
+                if (error) throw error;
+                if (!data) throw new Error('Invoice not found');
+
+                setInvoice(data);
+            } catch (err: any) {
+                console.error('Error fetching invoice:', err);
+                setError(err.message || 'Failed to load invoice');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchInvoice();
+        }
+    }, [id]);
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(amount);
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen text-slate-800 font-sans selection:bg-sage/30">
+                <Sidebar />
+                <Header title="Invoice Details" subtitle="Loading..." />
+                <main className="md:ml-64 pt-32 px-8 pb-12 flex items-center justify-center h-[60vh]">
+                    <div className="flex flex-col items-center gap-3">
+                        <svg className="animate-spin h-8 w-8 text-sage" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p className="text-slate-400 font-medium">Loading details...</p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    if (error || !invoice) {
+        return (
+            <div className="min-h-screen text-slate-800 font-sans selection:bg-sage/30">
+                <Sidebar />
+                <Header title="Invoice Details" subtitle="Error" />
+                <main className="md:ml-64 pt-32 px-8 pb-12">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100 flex items-center gap-4">
+                            <div className="p-3 bg-rose-100 rounded-xl text-rose-600">
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-rose-700 font-bold text-lg">Failed to load invoice</h3>
+                                <p className="text-rose-600">{error || 'Invoice not found'}</p>
+                            </div>
+                            <button onClick={() => router.back()} className="ml-auto px-4 py-2 bg-rose-200 hover:bg-rose-300 text-rose-800 rounded-lg font-medium transition-colors">
+                                Go Back
+                            </button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen text-slate-800 font-sans selection:bg-sage/30">
             <Sidebar />
-            <Header title="Invoice Details" subtitle={id} />
+            <Header title="Invoice Details" subtitle={invoice.client_name} />
 
             <main className="md:ml-64 pt-32 px-8 pb-12">
                 <div className="max-w-4xl mx-auto space-y-8">
@@ -121,26 +155,28 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
 
                                         // Invoice Info
                                         doc.setFontSize(10);
-                                        doc.text(`Invoice ID: ${invoice.id}`, 14, 45);
-                                        doc.text(`Date: ${invoice.date}`, 14, 50);
+                                        doc.text(`Invoice ID: ${invoice.id.split('-')[0]}...`, 14, 45);
+                                        doc.text(`Date: ${new Date(invoice.date).toLocaleDateString()}`, 14, 50);
                                         doc.text(`Status: ${invoice.status}`, 14, 55);
 
                                         // Bill To
                                         doc.text('Bill To:', 120, 45);
                                         doc.setFont('helvetica', 'bold');
-                                        doc.text(invoice.client, 120, 50);
+                                        doc.text(invoice.client_name, 120, 50);
                                         doc.setFont('helvetica', 'normal');
                                         doc.text(invoice.email, 120, 55);
 
                                         // Items Table
                                         autoTable(doc, {
                                             startY: 65,
-                                            head: [['Description', 'Qty', 'Price', 'Total']],
-                                            body: invoice.items.map(item => [
-                                                item.desc,
-                                                item.qty,
-                                                `$${item.price.toFixed(2)}`,
-                                                `$${(item.price * item.qty).toFixed(2)}`
+                                            head: [['Type', 'Qty', 'Unit', 'Purity', 'Price', 'Total']],
+                                            body: invoice.invoice_items.map(item => [
+                                                item.item_type,
+                                                item.quantity,
+                                                item.unit,
+                                                item.purity ? `${item.purity}k` : '-',
+                                                `$${item.unit_price.toFixed(2)}`,
+                                                `$${item.total.toFixed(2)}`
                                             ]),
                                             headStyles: { fillColor: [137, 152, 109] }, // Sage
                                             theme: 'grid'
@@ -151,7 +187,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                                         const finalY = (doc as any).lastAutoTable.finalY + 10;
                                         doc.setFontSize(14);
                                         doc.setTextColor(0);
-                                        doc.text(`Total Amount: ${invoice.amount}`, 120, finalY);
+                                        doc.text(`Total Amount: ${formatCurrency(invoice.total_amount)}`, 120, finalY);
 
                                         doc.save(`invoice-${invoice.id}.pdf`);
                                     } catch (error) {
@@ -186,7 +222,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                         {/* Header */}
                         <div className="flex justify-between items-start border-b border-slate-200/50 pb-8 mb-8 relative z-10">
                             <div>
-                                <h1 className="text-4xl font-bold text-slate-800 mb-3 tracking-tight">Invoice <span className="text-slate-400 font-light text-2xl ml-2">{invoice.id}</span></h1>
+                                <h1 className="text-4xl font-bold text-slate-800 mb-3 tracking-tight">Invoice <span className="text-slate-400 font-light text-2xl ml-2 text-[0.6em] align-middle bg-slate-100/50 px-2 py-1 rounded-md font-mono">#{invoice.id.split('-')[0]}</span></h1>
                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border
                           ${invoice.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                                         invoice.status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-100' :
@@ -197,7 +233,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                             </div>
                             <div className="text-right">
                                 <p className="text-slate-500 font-medium text-sm uppercase tracking-wider mb-1">Amount Due</p>
-                                <p className="text-4xl font-bold text-slate-800 tracking-tight">{invoice.amount}</p>
+                                <p className="text-4xl font-bold text-slate-800 tracking-tight">{formatCurrency(invoice.total_amount)}</p>
                             </div>
                         </div>
 
@@ -205,12 +241,12 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                         <div className="grid grid-cols-2 gap-12 mb-10 relative z-10">
                             <div>
                                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Bill To</h3>
-                                <p className="text-xl font-semibold text-slate-900 mb-1">{invoice.client}</p>
+                                <p className="text-xl font-semibold text-slate-900 mb-1">{invoice.client_name}</p>
                                 <p className="text-slate-500 font-medium">{invoice.email}</p>
                             </div>
                             <div className="text-right">
                                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Invoice Date</h3>
-                                <p className="text-xl font-semibold text-slate-900">{invoice.date}</p>
+                                <p className="text-xl font-semibold text-slate-900">{new Date(invoice.date).toLocaleDateString()}</p>
                             </div>
                         </div>
 
@@ -221,17 +257,22 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                                     <tr>
                                         <th className="px-8 py-4 font-semibold">Description</th>
                                         <th className="px-8 py-4 font-semibold text-center">Qty</th>
+                                        <th className="px-8 py-4 font-semibold text-center">Unit</th>
                                         <th className="px-8 py-4 font-semibold text-right">Price</th>
                                         <th className="px-8 py-4 font-semibold text-right">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {invoice.items.map((item, i) => (
+                                    {invoice.invoice_items.map((item, i) => (
                                         <tr key={i}>
-                                            <td className="px-8 py-5 text-slate-700 font-medium">{item.desc}</td>
-                                            <td className="px-8 py-5 text-center text-slate-600">{item.qty}</td>
-                                            <td className="px-8 py-5 text-right text-slate-600 font-mono">${item.price.toFixed(2)}</td>
-                                            <td className="px-8 py-5 text-right font-bold text-slate-900 font-mono">${(item.price * item.qty).toFixed(2)}</td>
+                                            <td className="px-8 py-5 text-slate-700 font-medium">
+                                                <div className="font-semibold text-slate-800">{item.item_type}</div>
+                                                <div className="text-xs text-slate-500">Purity: {item.purity || 24}k</div>
+                                            </td>
+                                            <td className="px-8 py-5 text-center text-slate-600">{item.quantity}</td>
+                                            <td className="px-8 py-5 text-center text-slate-400 text-sm">{item.unit}</td>
+                                            <td className="px-8 py-5 text-right text-slate-600 font-mono">${item.unit_price.toFixed(2)}</td>
+                                            <td className="px-8 py-5 text-right font-bold text-slate-900 font-mono">${item.total.toFixed(2)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
