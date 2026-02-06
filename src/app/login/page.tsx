@@ -1,12 +1,14 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 export default function LoginPage() {
     const router = useRouter();
+    const supabase = createClient();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -17,21 +19,17 @@ export default function LoginPage() {
         setError('');
         setIsLoading(true);
 
-        try {
-            const { data, error: authError } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
 
-            if (authError) throw authError;
-
-            if (data?.user) {
-                router.push('/prices');
-            }
-        } catch (err: unknown) {
-            setError((err as Error).message || 'Invalid email or password. Please try again.');
-        } finally {
+        if (error) {
+            setError(error.message);
             setIsLoading(false);
+        } else {
+            router.push('/prices');
+            router.refresh();
         }
     };
 

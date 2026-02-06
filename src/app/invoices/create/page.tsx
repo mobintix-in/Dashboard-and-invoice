@@ -4,9 +4,9 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
 
 type Unit = 'mg' | 'g' | 'kg' | 'oz' | 'ct';
 
@@ -29,6 +29,7 @@ const CONVERSION_TO_OZ: Record<Unit, number> = {
 
 export default function CreateInvoicePage() {
     const router = useRouter();
+    const supabase = createClient();
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         clientName: '',

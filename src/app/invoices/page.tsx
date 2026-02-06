@@ -3,8 +3,8 @@
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
 
 interface Invoice {
     id: string;
@@ -22,6 +22,7 @@ export default function InvoicesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const supabase = createClient();
 
     const fetchInvoices = async () => {
         setIsLoading(true);

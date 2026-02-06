@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
+    const supabase = createClient();
     const [userEmail, setUserEmail] = useState('Loading...');
 
     useEffect(() => {

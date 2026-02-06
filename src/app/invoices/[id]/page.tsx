@@ -4,8 +4,8 @@ import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
-import { supabase } from "@/lib/supabase";
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 interface InvoiceItem {
     id: string;
@@ -34,6 +34,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
     const [invoice, setInvoice] = useState<Invoice | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const supabase = createClient();
 
     useEffect(() => {
         const fetchInvoice = async () => {
