@@ -371,7 +371,7 @@ export default function CreateInvoicePage() {
                                             doc.setFontSize(26);
                                             doc.setTextColor(137, 152, 109); // Sage
                                             doc.setFont('helvetica', 'bold');
-                                            doc.text('ZENITH', 14, 22);
+                                            doc.text('Rrumi', 14, 22);
 
                                             doc.setFontSize(10);
                                             doc.setTextColor(100);
@@ -381,10 +381,10 @@ export default function CreateInvoicePage() {
                                             // Shop Details (Right Aligned)
                                             doc.setFontSize(10);
                                             doc.setTextColor(60);
-                                            doc.text('ZENITH Gold & Silver', 196, 20, { align: 'right' });
+                                            doc.text('Rrumi Gold & Silver', 196, 20, { align: 'right' });
                                             doc.text('123 Financial District', 196, 25, { align: 'right' });
                                             doc.text('New York, NY 10005', 196, 30, { align: 'right' });
-                                            doc.text('support@zenith.com', 196, 35, { align: 'right' });
+                                            doc.text('support@Rrumi.com', 196, 35, { align: 'right' });
                                             doc.text('+1 (555) 123-4567', 196, 40, { align: 'right' });
 
                                             // -- Divider --
@@ -476,7 +476,7 @@ export default function CreateInvoicePage() {
                                             doc.setFontSize(8);
                                             doc.setTextColor(150);
                                             doc.text('Thank you for your business!', 105, 280, { align: 'center' });
-                                            doc.text('zenith-app.com', 105, 285, { align: 'center' });
+                                            doc.text('Rrumi.com', 105, 285, { align: 'center' });
 
                                             doc.save(`invoice-${formData.clientName.replace(/\s+/g, '-').toLowerCase() || 'new'}.pdf`);
                                         } catch (error) {

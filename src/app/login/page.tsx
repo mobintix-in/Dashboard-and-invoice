@@ -13,7 +13,7 @@ export default function LoginPage() {
             <div className="w-full max-w-md bg-white/50 backdrop-blur-xl border border-sage/20 rounded-2xl p-8 relative z-10 shadow-xl">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-sage-dark mb-2">
-                        ZENITH
+                        Rrumi
                     </h1>
                     <p className="text-slate-500 text-sm">Sign in to your admin dashboard</p>
                 </div>

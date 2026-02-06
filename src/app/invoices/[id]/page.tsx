@@ -113,7 +113,7 @@ export default function InvoiceDetailsPage({ params }: { params: Promise<{ id: s
                                         // Header
                                         doc.setFontSize(22);
                                         doc.setTextColor(137, 152, 109); // Sage (#89986D)
-                                        doc.text('ZENITH', 14, 20);
+                                        doc.text('Rrumi', 14, 20);
 
                                         doc.setFontSize(12);
                                         doc.setTextColor(100);

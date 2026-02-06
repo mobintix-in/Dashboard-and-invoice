@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Zenith Admin | Dashboard",
+  title: "Rrumi Admin | Dashboard",
   description: "A premium admin dashboard built with Next.js and Tailwind CSS",
 };
 
