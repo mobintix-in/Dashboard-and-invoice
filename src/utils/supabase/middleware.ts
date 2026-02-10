@@ -39,12 +39,9 @@ export async function updateSession(request: NextRequest) {
     const { error } = await supabase.auth.getUser()
 
     if (error) {
-        // If the token is invalid (e.g. "Invalid Refresh Token"), sign out to clear the cookies
-        // preventing the client from entering an error loop.
         try {
             await supabase.auth.signOut()
         } catch (e) {
-            // Ignore errors during sign out
         }
     }
 
