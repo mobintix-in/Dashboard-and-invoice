@@ -97,16 +97,6 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
-                        <label className="flex items-center space-x-2 cursor-pointer group">
-                            <input type="checkbox" className="w-4 h-4 rounded border-slate-300 bg-white text-sage focus:ring-offset-white focus:ring-sage/20" />
-                            <span className="text-slate-500 group-hover:text-slate-700 transition-colors">Remember me</span>
-                        </label>
-                        <Link href="#" className="text-sage-dark hover:text-sage transition-colors">
-                            Forgot password?
-                        </Link>
-                    </div>
-
                     <button
                         type="submit"
                         disabled={isLoading}
@@ -123,13 +113,6 @@ export default function LoginPage() {
                         ) : 'Sign In'}
                     </button>
                 </form>
-
-                <p className="mt-8 text-center text-sm text-slate-500">
-                    Don&apos;t have an account?{' '}
-                    <Link href="#" className="text-sage-dark hover:text-sage transition-colors font-medium">
-                        Contact Support
-                    </Link>
-                </p>
             </div>
         </div>
     );
